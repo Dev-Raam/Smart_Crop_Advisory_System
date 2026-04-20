@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #86c440;
+  --color-primary-dark: #6da62f;
+  --color-background: #f6f4ea;
+  --color-surface: #ffffff;
+  --color-ink: #243224;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-[var(--color-background)] text-[var(--color-ink)] antialiased;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+}
+
+.glass-panel {
+  @apply bg-white border border-white/60 rounded-[30px];
+  box-shadow: 0 22px 70px rgba(40, 60, 20, 0.12);
+}
+
+.farm-page {
+  @apply px-4 md:px-6 pb-10;
+}
+
+.farm-content {
+  @apply max-w-7xl mx-auto;
+}
+
+.farm-banner {
+  @apply relative overflow-hidden rounded-[34px] min-h-[220px] md:min-h-[320px] text-white;
+  background-size: cover;
+  background-position: center;
+}
+
+.farm-banner::before {
+  content: "";
+  @apply absolute inset-0;
+  background: linear-gradient(90deg, rgba(18, 39, 18, 0.84), rgba(23, 43, 18, 0.48));
+}
+
+.farm-banner-content {
+  @apply relative z-10 px-6 py-8 md:px-12 md:py-14;
+}
+
+.farm-badge {
+  @apply inline-flex items-center gap-2 rounded-full bg-white/14 px-4 py-2 text-xs font-semibold tracking-[0.18em] uppercase border border-white/15 backdrop-blur-sm;
+}
+
+.farm-section-card {
+  @apply bg-white border border-white/60 rounded-[30px] p-6 md:p-8;
+  box-shadow: 0 22px 70px rgba(40, 60, 20, 0.12);
+}
+
+.farm-input-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5;
+}
+
+.farm-field {
+  @apply w-full rounded-2xl border border-[#dfe5d4] bg-white px-4 py-3.5 text-[15px] text-[#304030] outline-none transition-all duration-200 shadow-sm;
+}
+
+.farm-field:focus {
+  @apply border-[#86c440] ring-4 ring-[#86c440]/15;
+}
+
+.farm-label {
+  @apply block text-[12px] font-bold uppercase tracking-[0.14em] text-[#5a6651] mb-2;
+}
+
+.farm-primary-button {
+  @apply inline-flex items-center justify-center gap-2 rounded-full bg-[#86c440] px-6 py-3.5 font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#6da62f];
+  box-shadow: 0 18px 40px rgba(134, 196, 64, 0.28);
+}
+
+.farm-secondary-button {
+  @apply inline-flex items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-6 py-3.5 font-semibold text-white backdrop-blur-sm transition-all duration-200 hover:bg-white/16;
+}
+
+.farm-submit-button {
+  @apply w-full rounded-2xl bg-[#2f2f2f] px-6 py-4 text-base font-semibold text-white transition-all duration-200 hover:bg-[#1f1f1f] disabled:opacity-60 disabled:cursor-not-allowed;
+}
+
+.farm-dark-card {
+  @apply relative overflow-hidden rounded-[28px] min-h-[320px] p-6 flex flex-col justify-end text-white;
+  box-shadow: 0 20px 50px rgba(15, 25, 10, 0.35);
+  background-size: cover;
+  background-position: center;
+}
+
+.farm-dark-card::before {
+  content: "";
+  @apply absolute inset-0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.78));
+}
+
+.farm-dark-card-content {
+  @apply relative z-10;
+}
+
+.farm-mini-button {
+  @apply inline-flex items-center rounded-full border border-[#86c440] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-white/95;
+}
+
+.farm-upload-zone {
+  @apply rounded-[26px] border-2 border-dashed border-[#d8ddcf] bg-[#fbfbf7] p-8 text-center transition-all duration-200;
+}
+
+.farm-upload-zone:hover {
+  @apply border-[#86c440] bg-white;
+}
+
+.farm-auth-shell {
+  @apply min-h-screen relative flex items-center justify-center px-4 py-10 overflow-hidden;
+  background-size: cover;
+  background-position: center;
+}
+
+.farm-auth-shell::before {
+  content: "";
+  @apply absolute inset-0;
+  background: linear-gradient(0deg, rgba(15, 31, 12, 0.58), rgba(15, 31, 12, 0.48));
+}
+
+.farm-auth-card {
+  @apply relative z-10 w-full max-w-md p-8 md:p-10 bg-white border border-white/60 rounded-[30px];
+  box-shadow: 0 22px 70px rgba(40, 60, 20, 0.12);
+}
+
+.farm-auth-divider {
+  @apply flex items-center gap-3 text-xs uppercase tracking-[0.24em] text-[#93a08a];
+}
+
+.farm-auth-divider::before,
+.farm-auth-divider::after {
+  content: "";
+  @apply h-px flex-1 bg-[#dfe5d4];
+}

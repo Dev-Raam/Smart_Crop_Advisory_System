@@ -1,0 +1,39 @@
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Environment variables
+.env
+.env.local
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+
+# Logs / DB
+*.log
+*.sqlite3
+*.db
+*.bak
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+#joblib
+ml-service/*.joblib
