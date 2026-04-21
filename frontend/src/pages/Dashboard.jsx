@@ -16,7 +16,7 @@ import {
   IndianRupee,
   MessageSquareQuote,
 } from 'lucide-react';
-import heroImage from '../assets/hero.png';
+import heroImage from '../assets/corn-field.jpg';
 import { useAuth } from '../context/AuthContext';
 import { translate } from '../utils/translations';
 

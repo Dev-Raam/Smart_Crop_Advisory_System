@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Search, Sprout, FlaskConical } from 'lucide-react';
-import heroImage from '../assets/hero.png';
+import heroImage from '../assets/wheat.jpg';
 import { useAuth } from '../context/AuthContext';
 import { api, getAuthHeaders } from '../lib/api';
 import { formatConfidence } from '../utils/formatters';

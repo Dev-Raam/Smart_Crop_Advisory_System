@@ -1,5 +1,5 @@
 import { Rocket, Languages, LineChart, WifiOff, RefreshCw } from 'lucide-react';
-import heroImage from '../assets/hero.png';
+import heroImage from '../assets/farmf.jpg';
 import { useAuth } from '../context/AuthContext';
 import { translate } from '../utils/translations';
 

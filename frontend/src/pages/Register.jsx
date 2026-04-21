@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Sprout, User, Phone, Lock, Languages, UserPlus } from 'lucide-react';
-import heroImage from '../assets/hero.png';
+import heroImage from '../assets/crops-banner.jpg';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
 import { LANGUAGE_OPTIONS } from '../lib/constants';

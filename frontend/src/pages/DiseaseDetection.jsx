@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { AlertCircle, Bug, Loader2, ScanSearch, Upload, X } from 'lucide-react';
-import heroImage from '../assets/hero.png';
+import heroImage from '../assets/pestdet.jpg';
 import { useAuth } from '../context/AuthContext';
 import { api, getAuthHeaders } from '../lib/api';
 import { formatConfidence } from '../utils/formatters';
