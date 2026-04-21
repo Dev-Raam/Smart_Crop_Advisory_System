@@ -1,30 +1,65 @@
 import axios from 'axios';
 import History from '../models/History.js';
+import mongoose from 'mongoose';
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://127.0.0.1:8000';
 
-const saveHistory = (userId, type, data) => History.create({ userId, type, data });
+const saveHistory = async (userId, type, data) => {
+  if (mongoose.connection.readyState !== 1) {
+    return null;
+  }
 
-const buildFallbackReply = (message) => {
+  try {
+    return await History.create({ userId, type, data });
+  } catch (error) {
+    console.warn(`Skipping history save for ${type}:`, error.message);
+    return null;
+  }
+};
+
+const pestAdviceMap = {
+  aphids: 'Inspect the underside of leaves, control ant movement, and consider neem oil or a label-approved systemic spray if populations are increasing.',
+  armyworm: 'Scout in the evening, check whorl damage, and manage early with biological controls or crop-safe insecticide before larvae mature.',
+  beetle: 'Hand-remove where possible, watch edge rows first, and use crop-specific beetle control if feeding damage crosses threshold.',
+  bollworm: 'Check buds and fruiting bodies closely, install pheromone traps, and time sprays to early larval stages.',
+  grasshopper: 'Monitor field borders and grassy bunds, reduce nearby weed hosts, and intervene early when hopper numbers rise.',
+  mites: 'Avoid unnecessary broad-spectrum sprays, improve moisture balance, and use a miticide only after confirming active infestation.',
+  mosquito: 'Reduce stagnant water and manage humidity-heavy zones around the farm.',
+  sawfly: 'Look for chewing damage and clustered larvae, then target small larvae before heavy defoliation starts.',
+  stem_borer: 'Inspect dead hearts or bore holes, remove affected shoots when practical, and use crop-stage-specific control measures.',
+};
+
+const buildFallbackReply = (message, context = {}) => {
   const normalized = message.toLowerCase();
+  const weatherLine = context.locationName
+    ? `For ${context.locationName}${context.temperature != null ? ` at about ${Math.round(context.temperature)}°C` : ''}, `
+    : '';
 
   if (normalized.includes('water') || normalized.includes('irrig')) {
-    return 'Check the topsoil moisture first. Water early in the morning, avoid waterlogging, and reduce irrigation if leaves are drooping with wet soil.';
+    return `${weatherLine}check topsoil moisture before irrigating. Water early in the morning, avoid standing water, and reduce frequency if the root zone is still wet.`;
   }
 
   if (normalized.includes('fertiliz') || normalized.includes('nutrient') || normalized.includes('npk')) {
-    return 'Use soil-test values before increasing fertilizer. Split nitrogen doses, keep phosphorus near the root zone, and avoid adding more potassium unless the crop or soil report supports it.';
+    return `${weatherLine}base fertilizer decisions on a soil test, split nitrogen into stages, and avoid raising all nutrients together unless symptoms and soil data support it.`;
   }
 
-  if (normalized.includes('pest') || normalized.includes('disease') || normalized.includes('leaf')) {
-    return 'Inspect the lower and upper leaf surfaces, isolate badly affected plants, remove heavily damaged leaves, and apply the correct fungicide or insecticide only after confirming the symptom pattern.';
+  if (normalized.includes('pest') || normalized.includes('disease') || normalized.includes('leaf') || normalized.includes('spray')) {
+    return `${weatherLine}confirm the symptom first, isolate heavily affected plants, and spray only after checking crop stage, pest pressure, and the label-safe product for that crop.`;
   }
 
   if (normalized.includes('rain') || normalized.includes('weather')) {
-    return 'Plan field work around expected rain, avoid spraying before showers, and keep drainage channels open so roots do not stay saturated.';
+    return `${weatherLine}avoid spraying before rainfall, keep drainage open, and use calmer wind windows for field operations.`;
   }
 
-  return 'Focus on current soil moisture, crop stage, and visible symptoms before making a field decision. If you share those details, I can suggest the next step more precisely.';
+  return `${weatherLine}share your crop, growth stage, field symptom, and recent weather so I can give a more accurate next step.`;
+};
+
+const cleanModelReply = (rawReply, prompt) => {
+  if (!rawReply) {
+    return '';
+  }
+
+  return rawReply.replace(prompt, '').replace(/^AI:\s*/i, '').trim();
 };
 
 export const recommendCrop = async (req, res) => {
@@ -56,24 +91,25 @@ export const detectDisease = async (req, res) => {
 
     const formData = new FormData();
     const blob = new Blob([req.file.buffer], { type: req.file.mimetype || 'image/jpeg' });
-    formData.append('image', blob, req.file.originalname || 'leaf.jpg');
+    formData.append('image', blob, req.file.originalname || 'crop-image.jpg');
 
     const response = await axios.post(`${ML_SERVICE_URL}/analyze-disease`, formData, {
       maxBodyLength: Infinity,
     });
 
     await saveHistory(req.user, 'disease_detection', {
-      disease: response.data.disease,
+      disease: response.data.label || response.data.disease,
       confidence: response.data.confidence,
       treatment: response.data.treatment,
       summary: response.data.summary,
+      source: response.data.source,
     });
 
     return res.json(response.data);
   } catch (error) {
     console.error('Disease detection error:', error.message);
     return res.status(503).json({
-      message: 'Error analyzing the plant image. Make sure the ML service is running.',
+      message: 'Error analyzing the crop image. Make sure the ML service is running.',
       error: error.message,
     });
   }
@@ -81,22 +117,34 @@ export const detectDisease = async (req, res) => {
 
 export const chatWithAssistant = async (req, res) => {
   try {
-    const { message, language } = req.body;
+    const { message, language, context } = req.body;
     const apiKey = process.env.HUGGINGFACE_API_KEY;
     let aiResponse = '';
     let source = 'fallback';
 
     if (apiKey) {
-      const prompt = `You are a helpful smart crop advisory AI assistant for farmers in India. Answer clearly and briefly.\nUser: ${message}\nAI:`;
+      const prompt = [
+        'You are a smart crop advisory assistant for Indian farmers.',
+        'Answer in short practical steps with local awareness.',
+        context?.locationName ? `Location: ${context.locationName}` : '',
+        context?.temperature != null ? `Temperature: ${Math.round(context.temperature)} C` : '',
+        context?.humidity != null ? `Humidity: ${Math.round(context.humidity)} percent` : '',
+        context?.windSpeed != null ? `Wind speed: ${Math.round(context.windSpeed)} kmph` : '',
+        `Language hint: ${language || 'en'}`,
+        `User: ${message}`,
+        'AI:',
+      ]
+        .filter(Boolean)
+        .join('\n');
 
       try {
         const hfResponse = await axios.post(
           'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2',
-          { inputs: prompt, parameters: { max_new_tokens: 150 } },
+          { inputs: prompt, parameters: { max_new_tokens: 180, temperature: 0.3 } },
           { headers: { Authorization: `Bearer ${apiKey}` }, timeout: 30000 },
         );
 
-        aiResponse = hfResponse.data?.[0]?.generated_text?.replace(prompt, '').trim() || '';
+        aiResponse = cleanModelReply(hfResponse.data?.[0]?.generated_text, prompt);
         if (aiResponse) {
           source = 'huggingface';
         }
@@ -106,7 +154,12 @@ export const chatWithAssistant = async (req, res) => {
     }
 
     if (!aiResponse) {
-      aiResponse = buildFallbackReply(message);
+      const matchedPest = Object.keys(pestAdviceMap).find((key) => message.toLowerCase().includes(key.replace('_', ' ')));
+      if (matchedPest) {
+        aiResponse = pestAdviceMap[matchedPest];
+      } else {
+        aiResponse = buildFallbackReply(message, context);
+      }
       source = 'fallback';
     }
 
@@ -114,6 +167,7 @@ export const chatWithAssistant = async (req, res) => {
       user_message: message,
       ai_response: aiResponse,
       language,
+      context,
     });
 
     return res.json({ reply: aiResponse, source });
@@ -129,5 +183,22 @@ export const getHistory = async (req, res) => {
     return res.json(history);
   } catch (error) {
     return res.status(500).json({ message: 'Error fetching history', error: error.message });
+  }
+};
+
+export const deleteHistoryEntry = async (req, res) => {
+  try {
+    const historyItem = await History.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user,
+    });
+
+    if (!historyItem) {
+      return res.status(404).json({ message: 'History item not found.' });
+    }
+
+    return res.json({ success: true, id: req.params.id });
+  } catch (error) {
+    return res.status(500).json({ message: 'Error deleting history item', error: error.message });
   }
 };

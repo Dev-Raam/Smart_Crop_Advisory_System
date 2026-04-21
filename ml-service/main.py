@@ -7,6 +7,7 @@ from fastapi import FastAPI, File, UploadFile
 from pydantic import BaseModel, Field
 
 from train_model import MODEL_PATH, FEATURE_COLUMNS, train
+from train_pest_model import PEST_MODEL_PATH, IMAGE_SIZE, train_pest_model
 
 try:
     from PIL import Image
@@ -14,6 +15,18 @@ except ImportError:  # pragma: no cover
     Image = None
 
 app = FastAPI(title="Smart Crop ML Service")
+
+PEST_TREATMENTS = {
+    "aphids": "Inspect the underside of leaves, reduce ant movement, and use neem-based or crop-approved systemic control if infestation is rising.",
+    "armyworm": "Scout in the evening, check whorl feeding, and act early with biological or label-approved insect control before larger larvae spread.",
+    "beetle": "Monitor edge rows first, remove clusters where practical, and target the crop-safe control only if feeding damage is crossing threshold.",
+    "bollworm": "Check flowers and fruiting bodies closely, use pheromone traps, and time sprays to early larval stages for better control.",
+    "grasshopper": "Watch field borders and grassy hosts, reduce weed shelter, and intervene early before hopper movement intensifies.",
+    "mites": "Confirm webbing or stippling, avoid unnecessary broad-spectrum sprays, and use a miticide only after active infestation is verified.",
+    "mosquito": "Reduce standing water and keep nursery or waterlogged areas cleaner to lower breeding pressure.",
+    "sawfly": "Scout for clustered larvae and chewing damage, then target small larvae before defoliation becomes severe.",
+    "stem_borer": "Inspect for bore holes or dead hearts and use crop-stage-specific management as soon as internal feeding is confirmed.",
+}
 
 
 def _artifact_matches_expected_schema(artifact):
@@ -58,10 +71,21 @@ def load_artifact():
     }
 
 
+def load_pest_artifact():
+    if not PEST_MODEL_PATH.exists():
+        return None
+
+    artifact = joblib.load(PEST_MODEL_PATH)
+    if not isinstance(artifact, dict) or artifact.get("model") is None:
+        return None
+    return artifact
+
+
 ARTIFACT = load_artifact()
 MODEL = ARTIFACT["model"]
 FERTILIZER_REFERENCE = ARTIFACT.get("fertilizer_reference")
 FERTILIZER_NUMERIC_COLUMNS = ARTIFACT.get("fertilizer_numeric_columns", [])
+PEST_ARTIFACT = load_pest_artifact()
 
 
 class CropInput(BaseModel):
@@ -102,6 +126,46 @@ def _get_fertilizer_advice(data: CropInput):
     }
 
 
+def _extract_pest_features(image: Image.Image):
+    resized = image.resize(IMAGE_SIZE)
+    pixels = np.asarray(resized, dtype=np.float32) / 255.0
+    flattened = pixels.flatten()
+    means = pixels.mean(axis=(0, 1))
+    stds = pixels.std(axis=(0, 1))
+    mins = pixels.min(axis=(0, 1))
+    maxs = pixels.max(axis=(0, 1))
+    return np.concatenate([flattened, means, stds, mins, maxs])[None, :]
+
+
+def _predict_pest_with_model(contents: bytes):
+    if PEST_ARTIFACT is None or Image is None:
+        return None
+
+    image = Image.open(BytesIO(contents)).convert("RGB")
+    features = _extract_pest_features(image)
+    model = PEST_ARTIFACT["model"]
+    prediction = str(model.predict(features)[0])
+
+    confidence = 71.0
+    if hasattr(model, "predict_proba"):
+        confidence = round(float(np.max(model.predict_proba(features)[0]) * 100), 2)
+
+    human_label = prediction.replace("_", " ").title()
+    treatment = PEST_TREATMENTS.get(
+        prediction,
+        "Inspect the affected plants closely and confirm field symptoms before spraying.",
+    )
+
+    return {
+        "label": human_label,
+        "disease": human_label,
+        "confidence": confidence,
+        "summary": f"The uploaded crop image most closely matches the trained pest class '{human_label}'. Confirm the symptom pattern in the field before treatment.",
+        "treatment": treatment,
+        "source": "trained-pest-model",
+    }
+
+
 def _analyze_image_with_pillow(contents: bytes):
     image = Image.open(BytesIO(contents)).convert("RGB")
     resized = image.resize((128, 128))
@@ -115,33 +179,41 @@ def _analyze_image_with_pillow(contents: bytes):
 
     if green > red + 12 and green > blue + 8 and variance < 55:
         return {
+            "label": "Healthy",
             "disease": "Healthy",
             "confidence": 91.0,
             "summary": "Leaf color is predominantly green with a balanced texture pattern.",
             "treatment": "No urgent treatment is needed. Continue routine monitoring and avoid overwatering.",
+            "source": "visual-fallback",
         }
 
     if brightness > 165 and abs(red - green) < 18 and variance < 48:
         return {
+            "label": "Powdery Mildew",
             "disease": "Powdery Mildew",
             "confidence": 82.0,
             "summary": "The image shows pale, dusty-looking regions that often match mildew-like stress.",
             "treatment": "Improve airflow, avoid overhead irrigation late in the day, and apply a suitable sulfur or potassium bicarbonate spray if symptoms spread.",
+            "source": "visual-fallback",
         }
 
     if red > green + 10 and variance > 52:
         return {
+            "label": "Leaf Blight",
             "disease": "Leaf Blight",
             "confidence": 79.0,
             "summary": "Brown or reddish stress patches are visible along with stronger contrast across the leaf.",
             "treatment": "Remove heavily affected leaves, keep foliage dry, and use an appropriate copper-based or label-approved fungicide.",
+            "source": "visual-fallback",
         }
 
     return {
-        "disease": "Rust Spot",
-        "confidence": 74.0,
-        "summary": "The leaf shows uneven warm-toned spotting that may indicate a fungal rust pattern.",
-        "treatment": "Scout nearby plants, reduce leaf wetness duration, and use a crop-safe fungicide if the spotting continues to expand.",
+        "label": "Field Review Needed",
+        "disease": "Field Review Needed",
+        "confidence": 64.0,
+        "summary": "A trained pest classifier is not available yet in this environment, so this result is only a visual fallback estimate.",
+        "treatment": "Add a trained pest dataset under ml-service/pest_dataset and run train_pest_model.py for stronger pest classification.",
+        "source": "visual-fallback",
     }
 
 
@@ -149,17 +221,21 @@ def _fallback_image_analysis(contents: bytes):
     size_hint = len(contents)
     if size_hint < 40_000:
         return {
+            "label": "Healthy",
             "disease": "Healthy",
             "confidence": 65.0,
             "summary": "The uploaded image looks low-detail, but no severe stress signal was detected from the file pattern.",
             "treatment": "Retake the image in bright light if symptoms are present, otherwise continue monitoring.",
+            "source": "low-detail-fallback",
         }
 
     return {
+        "label": "Field Review Needed",
         "disease": "Field Review Needed",
         "confidence": 58.0,
         "summary": "The service could not perform a full visual analysis from this environment, so a field inspection is recommended.",
         "treatment": "Capture a close, well-lit leaf photo and inspect for spots, mildew, or chewing damage before treatment.",
+        "source": "byte-fallback",
     }
 
 
@@ -202,11 +278,17 @@ async def analyze_disease(image: UploadFile = File(...)):
     contents = await image.read()
     if not contents:
         return {
+            "label": "Field Review Needed",
             "disease": "Field Review Needed",
             "confidence": 0,
             "summary": "The uploaded image was empty.",
-            "treatment": "Upload a valid leaf image to continue.",
+            "treatment": "Upload a valid crop image to continue.",
+            "source": "empty-upload",
         }
+
+    trained_prediction = _predict_pest_with_model(contents)
+    if trained_prediction:
+        return trained_prediction
 
     if Image is not None:
         return _analyze_image_with_pillow(contents)
@@ -214,6 +296,14 @@ async def analyze_disease(image: UploadFile = File(...)):
     return _fallback_image_analysis(contents)
 
 
+@app.post("/train-pest-model")
+def train_pest_detector():
+    train_pest_model()
+    global PEST_ARTIFACT
+    PEST_ARTIFACT = load_pest_artifact()
+    return {"status": "trained", "model_path": str(PEST_MODEL_PATH)}
+
+
 @app.get("/health")
 def health_check():
-    return {"status": "ok"}
+    return {"status": "ok", "pest_model_ready": PEST_ARTIFACT is not None}

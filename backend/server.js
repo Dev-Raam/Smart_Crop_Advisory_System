@@ -9,22 +9,73 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const LOCAL_MONGO_URI = 'mongodb://127.0.0.1:27017/smartcrop';
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Database connection
-mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/smartcrop')
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
+app.locals.dbStatus = {
+  connected: false,
+  uri: null,
+  message: 'Database connection has not started yet.',
+};
 
-// Routes
+const tryConnectMongo = async (uri, label) => {
+  await mongoose.connect(uri, {
+    serverSelectionTimeoutMS: 5000,
+  });
+
+  app.locals.dbStatus = {
+    connected: true,
+    uri: label,
+    message: `Connected to ${label}`,
+  };
+  console.log(`MongoDB connected via ${label}`);
+};
+
+const connectDatabase = async () => {
+  const primaryUri = process.env.MONGO_URI || LOCAL_MONGO_URI;
+
+  try {
+    await tryConnectMongo(primaryUri, primaryUri === LOCAL_MONGO_URI ? 'local MongoDB' : 'MongoDB Atlas');
+    return;
+  } catch (primaryError) {
+    console.error(`Primary MongoDB connection failed: ${primaryError.message}`);
+  }
+
+  if (primaryUri !== LOCAL_MONGO_URI) {
+    try {
+      await mongoose.disconnect();
+    } catch {
+      // Ignore disconnect cleanup issues before retrying local MongoDB.
+    }
+
+    try {
+      await tryConnectMongo(LOCAL_MONGO_URI, 'local MongoDB');
+      return;
+    } catch (fallbackError) {
+      console.error(`Local MongoDB fallback failed: ${fallbackError.message}`);
+    }
+  }
+
+  app.locals.dbStatus = {
+    connected: false,
+    uri: null,
+    message: 'Database unavailable. Add your IP to MongoDB Atlas or start a local MongoDB server on 127.0.0.1:27017.',
+  };
+};
+
+void connectDatabase();
+
 app.use('/api/auth', authRoutes);
 app.use('/api/services', apiRoutes);
 
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Smart Crop Advisory API is running' });
+  res.status(200).json({
+    status: 'ok',
+    message: 'Smart Crop Advisory API is running',
+    database: app.locals.dbStatus,
+  });
 });
 
 app.listen(PORT, () => {

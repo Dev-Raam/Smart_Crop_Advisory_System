@@ -1,10 +1,11 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { Home, Sprout, Bug, MessageCircle, User, Lightbulb, MapPin, CloudSun } from 'lucide-react';
+import { CloudSun, Home, Lightbulb, MapPin, MessageCircle, Sprout, User, Bug } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { translate } from '../utils/translations';
+import ChatAssistantWidget from './ChatAssistantWidget';
 
 const Layout = () => {
-  const { isOffline, language, user } = useAuth();
+  const { isOffline, language, user, locationInfo, weatherInfo } = useAuth();
   const t = (key) => translate(language, key);
 
   const navItems = [
@@ -17,26 +18,26 @@ const Layout = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f6f4ea]">
-      <header className="fixed top-0 inset-x-0 z-50 px-3 md:px-5 pt-3">
+    <div className="min-h-screen bg-[var(--color-background)]">
+      <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 md:px-5">
         <div className="farm-content">
-          <div className="rounded-full bg-white/95 border border-[#ece7db] shadow-[0_12px_36px_rgba(34,48,21,0.12)] px-4 md:px-6 h-16 flex items-center justify-between backdrop-blur-md">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#d6f17f] to-[#5e9727] flex items-center justify-center text-white shadow-md">
+          <div className="flex h-16 items-center justify-between rounded-full border border-white/70 bg-white/92 px-4 shadow-[0_12px_36px_rgba(34,48,21,0.12)] backdrop-blur-md md:px-6">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#d6f17f] to-[#5e9727] text-white shadow-md">
                 <Sprout size={20} />
               </div>
-              <p className="text-lg md:text-xl font-semibold text-[#7baa33] tracking-tight truncate">
+              <p className="truncate text-lg font-semibold tracking-tight text-[#7baa33] md:text-xl">
                 {t('appName')}
               </p>
             </div>
 
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav className="hidden items-center gap-1 lg:flex">
               {navItems.map((item) => (
                 <NavLink
                   key={item.path}
                   to={item.path}
                   className={({ isActive }) =>
-                    `px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+                    `rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                       isActive ? 'bg-[#edf6dd] text-[#5b8e25]' : 'text-[#334433] hover:bg-[#f5f7ef]'
                     }`
                   }
@@ -46,41 +47,44 @@ const Layout = () => {
               ))}
             </nav>
 
-            <div className="hidden md:flex items-center gap-2 text-sm">
+            <div className="hidden items-center gap-2 text-sm md:flex">
               <div className="inline-flex items-center gap-2 rounded-full bg-[#f5f7ef] px-3 py-2 text-[#415141]">
                 <MapPin size={14} className="text-[#7baa33]" />
-                <span>Meerut</span>
+                <span>{locationInfo?.name || 'Ludhiana, Punjab'}</span>
               </div>
               <div className="inline-flex items-center gap-2 rounded-full bg-[#f5f7ef] px-3 py-2 text-[#415141]">
                 <CloudSun size={14} className="text-[#7baa33]" />
-                <span>24°C</span>
+                <span>{weatherInfo?.temperature_2m != null ? `${Math.round(weatherInfo.temperature_2m)}°C` : '--'}</span>
               </div>
               <div className="inline-flex items-center gap-2 rounded-full border border-[#e2e8d6] bg-white px-3 py-2 text-[#334433]">
                 <span>{language.toUpperCase()}</span>
               </div>
               <NavLink
                 to="/profile"
-                className="inline-flex items-center gap-2 rounded-full bg-[#86c440] px-4 py-2 text-white font-semibold shadow-[0_10px_24px_rgba(134,196,64,0.26)]"
+                className="inline-flex items-center gap-2 rounded-full bg-[#86c440] px-4 py-2 font-semibold text-white shadow-[0_10px_24px_rgba(134,196,64,0.26)]"
               >
                 <User size={14} />
                 <span>{user?.name || t('navProfile')}</span>
               </NavLink>
             </div>
           </div>
-          {isOffline && (
+
+          {isOffline ? (
             <div className="mt-2 rounded-full bg-red-500 px-4 py-2 text-center text-sm font-medium text-white shadow-md">
               {t('offlineBanner')}
             </div>
-          )}
+          ) : null}
         </div>
       </header>
 
-      <main className="pt-24 md:pt-28 pb-24 md:pb-10">
+      <main className="pb-24 pt-24 md:pb-10 md:pt-28">
         <Outlet />
       </main>
 
-      <nav className="md:hidden fixed bottom-3 inset-x-3 z-50 rounded-[26px] bg-white/95 border border-[#ece7db] shadow-[0_20px_50px_rgba(35,45,20,0.18)] backdrop-blur-md">
-        <div className="grid grid-cols-6 items-center h-18">
+      <ChatAssistantWidget />
+
+      <nav className="fixed inset-x-3 bottom-3 z-50 rounded-[26px] border border-[#ece7db] bg-white/95 shadow-[0_20px_50px_rgba(35,45,20,0.18)] backdrop-blur-md md:hidden">
+        <div className="grid h-18 grid-cols-6 items-center">
           {navItems.map((item) => (
             <NavLink
               key={item.path}
@@ -92,7 +96,7 @@ const Layout = () => {
               }
             >
               <item.icon size={18} />
-              <span className="text-[10px] mt-1 font-semibold">{item.name}</span>
+              <span className="mt-1 text-[10px] font-semibold">{item.name}</span>
             </NavLink>
           ))}
         </div>

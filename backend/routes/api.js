@@ -3,6 +3,7 @@ import multer from 'multer';
 import { auth } from '../middleware/auth.js';
 import {
   chatWithAssistant,
+  deleteHistoryEntry,
   detectDisease,
   getHistory,
   recommendCrop,
@@ -17,5 +18,6 @@ router.post('/recommend-crop', auth, recommendCrop);
 router.post('/detect-disease', auth, upload.single('image'), detectDisease);
 router.post('/chat', auth, chatWithAssistant);
 router.get('/history', auth, getHistory);
+router.delete('/history/:id', auth, deleteHistoryEntry);
 
 export default router;
