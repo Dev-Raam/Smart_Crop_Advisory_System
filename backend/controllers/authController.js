@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey_change_in_production';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const buildAuthPayload = (user) => ({
   id: user._id,

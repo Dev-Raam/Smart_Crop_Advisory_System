@@ -43,11 +43,11 @@ const Login = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="farm-label">{t('phoneNumber')}</label>
-            <div className="relative">
-              <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#90a086]" />
+            <div className="relative flex items-center">
+              <Phone size={16} className="absolute left-3 text-[#90a086] pointer-events-none" />
               <input
                 type="tel"
-                className="farm-field pl-11"
+                className="farm-field pl-12"
                 placeholder="+91 9876543210"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
@@ -57,11 +57,11 @@ const Login = () => {
           </div>
           <div>
             <label className="farm-label">{t('password')}</label>
-            <div className="relative">
-              <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#90a086]" />
+            <div className="relative flex items-center">
+              <Lock size={16} className="absolute left-3 text-[#90a086] pointer-events-none" />
               <input
                 type="password"
-                className="farm-field pl-11"
+                className="farm-field pl-12"
                 placeholder={t('enterPassword')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

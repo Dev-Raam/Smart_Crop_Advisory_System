@@ -98,7 +98,7 @@
 }
 
 .farm-field {
-  @apply w-full rounded-2xl border border-[#dfe5d4] bg-white px-4 py-3.5 text-[15px] text-[#304030] outline-none transition-all duration-200 shadow-sm;
+  @apply w-full rounded-2xl border border-[#dfe5d4] bg-white px-4 py-3.5 pl-12 text-[15px] text-[#304030] outline-none transition-all duration-200 shadow-sm;
 }
 
 .farm-field:focus {
@@ -185,9 +185,12 @@
 }
 
 @keyframes farm-float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
+
   50% {
     transform: translateY(-8px);
   }
