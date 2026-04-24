@@ -126,7 +126,7 @@ const Dashboard = () => {
               </p>
               <h1 className="max-w-3xl text-4xl font-black leading-[0.95] tracking-tight md:text-6xl">
                 Smarter farming
-                <span className="block text-[#8fda38]">without the clutter</span>
+                <span className="block text-[#8fda38]">Made Simple</span>
               </h1>
               <p className="mt-6 max-w-2xl text-base text-white/85 md:text-xl">
                 Weather, crop guidance, pest detection, multilingual AI support, and mandi insights in one cleaner dashboard.
