@@ -6,6 +6,7 @@ import {
   Wind,
   Droplets,
   Sprout,
+  FlaskConical,
   Bug,
   MessageCircle,
   Lightbulb,
@@ -75,6 +76,12 @@ const Dashboard = () => {
       description: 'Get AI-powered crop advice based on soil health, season, and field conditions.',
       icon: Sprout,
       path: '/crop-recommendation',
+    },
+    {
+      title: 'Fertilizer Recommendation',
+      description: 'Use crop, soil, moisture, and NPK inputs to get a dataset-trained fertilizer recommendation.',
+      icon: FlaskConical,
+      path: '/fertilizer-recommendation',
     },
     {
       title: 'Disease Detection',
@@ -195,7 +202,7 @@ const Dashboard = () => {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-5">
             {tools.map((tool, index) => (
               <Link
                 key={tool.path}

@@ -1,18 +1,13 @@
 import { Rocket, Languages, LineChart, WifiOff, RefreshCw } from 'lucide-react';
 import heroImage from '../assets/farmf.jpg';
-import { useAuth } from '../context/AuthContext';
-import { translate } from '../utils/translations';
 
 const FutureScope = () => {
-  const { language } = useAuth();
-  const t = (key) => translate(language, key);
-
   const items = [
-    { icon: Rocket, text: 'Improve AI models for more accurate crop recommendations and disease detection.' },
-    { icon: Languages, text: 'Add support for more regional languages and dialects to increase accessibility.' },
-    { icon: LineChart, text: 'Integrate real-time market price information for better crop selling decisions.' },
-    { icon: WifiOff, text: 'Enhance offline capabilities for seamless use in low-internet areas.' },
-    { icon: RefreshCw, text: 'Use farmer feedback and usage data for continuous system improvement.' },
+    { icon: Rocket, text: 'Smarter crop and pest models with stronger retraining checks and richer field-level confidence reporting.' },
+    { icon: Languages, text: 'More regional language support, including simpler farmer-first guidance and voice-led interactions.' },
+    { icon: LineChart, text: 'Live mandi pricing, trend views, and local selling insights connected to crop planning decisions.' },
+    { icon: WifiOff, text: 'Deeper offline support so core advisories remain useful even when the field has weak connectivity.' },
+    { icon: RefreshCw, text: 'Farmer feedback loops that keep improving recommendations, workflows, and practical usefulness over time.' },
   ];
 
   return (
@@ -22,10 +17,12 @@ const FutureScope = () => {
           <div className="farm-banner-content text-center max-w-3xl mx-auto">
             <div className="farm-badge mx-auto mb-5">
               <Rocket size={14} />
-              <span>{t('futureScopeTitle')}</span>
+              <span>Upcoming Features</span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-black">{t('futureScopeTitle')}</h1>
-            <p className="mt-4 text-white/82 text-base md:text-lg">{t('futureScopeSubtitle')}</p>
+            <h1 className="text-4xl md:text-5xl font-black">Upcoming Features</h1>
+            <p className="mt-4 text-white/82 text-base md:text-lg">
+              This page shows what is coming next in the platform as we expand the project beyond the current release.
+            </p>
           </div>
         </section>
 
@@ -41,7 +38,9 @@ const FutureScope = () => {
         </section>
 
         <section className="farm-section-card bg-gradient-to-r from-[#1f3d18] via-[#345926] to-[#79b43a] text-white">
-          <p className="text-lg leading-relaxed max-w-4xl">{t('futureScopeClosing')}</p>
+          <p className="text-lg leading-relaxed max-w-4xl">
+            These are upcoming features, not live modules yet. The goal is to keep the current system practical now while clearly showing the next capabilities planned for farmers.
+          </p>
         </section>
       </div>
     </div>

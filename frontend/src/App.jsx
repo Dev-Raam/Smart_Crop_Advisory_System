@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import CropRecommendation from './pages/CropRecommendation';
+import FertilizerRecommendation from './pages/FertilizerRecommendation';
 import DiseaseDetection from './pages/DiseaseDetection';
 import Chatbot from './pages/Chatbot';
 import Profile from './pages/Profile';
@@ -23,6 +24,7 @@ const AppContent = () => {
       <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="crop-recommendation" element={<CropRecommendation />} />
+        <Route path="fertilizer-recommendation" element={<FertilizerRecommendation />} />
         <Route path="disease-detection" element={<DiseaseDetection />} />
         <Route path="chatbot" element={<Chatbot />} />
         <Route path="future-scope" element={<FutureScope />} />

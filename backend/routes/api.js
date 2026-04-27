@@ -7,6 +7,7 @@ import {
   detectDisease,
   getHistory,
   recommendCrop,
+  recommendFertilizer,
 } from '../controllers/serviceController.js';
 
 const router = express.Router();
@@ -15,6 +16,7 @@ const upload = multer({
   limits: { fileSize: 8 * 1024 * 1024 },
 });
 router.post('/recommend-crop', auth, recommendCrop);
+router.post('/recommend-fertilizer', auth, recommendFertilizer);
 router.post('/detect-disease', auth, upload.single('image'), detectDisease);
 router.post('/chat', auth, chatWithAssistant);
 router.get('/history', auth, getHistory);

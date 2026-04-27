@@ -83,6 +83,27 @@ export const recommendCrop = async (req, res) => {
   }
 };
 
+export const recommendFertilizer = async (req, res) => {
+  try {
+    const response = await axios.post(`${ML_SERVICE_URL}/recommend-fertilizer`, req.body);
+
+    await saveHistory(req.user, 'fertilizer_recommendation', {
+      inputs: req.body,
+      fertilizer: response.data.fertilizer,
+      confidence: response.data.confidence,
+      explanation: response.data.explanation,
+    });
+
+    return res.json(response.data);
+  } catch (error) {
+    console.error('Fertilizer recommendation error:', error.message);
+    return res.status(503).json({
+      message: 'Error predicting fertilizer. Make sure the ML service is running.',
+      error: error.message,
+    });
+  }
+};
+
 export const detectDisease = async (req, res) => {
   try {
     if (!req.file) {

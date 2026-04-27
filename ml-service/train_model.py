@@ -5,10 +5,15 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
+from train_fertilizer_model import (
+    FERTILIZER_DATASET_PATH,
+    FERTILIZER_NUMERIC_FEATURES,
+    load_fertilizer_dataset,
+)
+
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "crop_recommendation_model.joblib"
 CROP_DATASET_PATH = BASE_DIR / "crop_recommendation_dataset.csv"
-FERTILIZER_DATASET_PATH = BASE_DIR / "fertlizer_recommendation_dataset.csv"
 
 FEATURE_COLUMNS = [
     "nitrogen",
@@ -21,12 +26,7 @@ FEATURE_COLUMNS = [
 ]
 
 FERTILIZER_NUMERIC_COLUMNS = [
-    "temperature",
-    "rainfall",
-    "ph",
-    "nitrogen",
-    "phosphorous",
-    "potassium",
+    feature for feature in FERTILIZER_NUMERIC_FEATURES if feature != "moisture" and feature != "carbon"
 ]
 
 
@@ -36,15 +36,9 @@ def _load_crop_dataset():
     return df
 
 
-def _load_fertilizer_dataset():
-    df = pd.read_csv(FERTILIZER_DATASET_PATH)
-    df.columns = [column.strip().lower() for column in df.columns]
-    return df
-
-
 def train():
     crop_df = _load_crop_dataset()
-    fertilizer_df = _load_fertilizer_dataset()
+    fertilizer_df = load_fertilizer_dataset()
 
     X = crop_df[FEATURE_COLUMNS]
     y = crop_df["label"]
@@ -54,9 +48,10 @@ def train():
     )
 
     model = RandomForestClassifier(
-        n_estimators=300,
+        n_estimators=180,
         random_state=42,
         class_weight="balanced",
+        n_jobs=1,
     )
     model.fit(X_train, y_train)
 

@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { CloudSun, Home, Lightbulb, MapPin, MessageCircle, Sprout, User, Bug } from 'lucide-react';
+import { CloudSun, Home, Lightbulb, MapPin, MessageCircle, Sprout, User, Bug, FlaskConical } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { translate } from '../utils/translations';
 import ChatAssistantWidget from './ChatAssistantWidget';
@@ -11,6 +11,7 @@ const Layout = () => {
   const navItems = [
     { name: t('navHome'), path: '/', icon: Home },
     { name: t('navCrops'), path: '/crop-recommendation', icon: Sprout },
+    { name: 'Fertilizer', path: '/fertilizer-recommendation', icon: FlaskConical },
     { name: t('navPests'), path: '/disease-detection', icon: Bug },
     { name: t('navChat'), path: '/chatbot', icon: MessageCircle },
     { name: t('navFutureScope'), path: '/future-scope', icon: Lightbulb },
@@ -84,7 +85,7 @@ const Layout = () => {
       <ChatAssistantWidget />
 
       <nav className="fixed inset-x-3 bottom-3 z-50 rounded-[26px] border border-[#ece7db] bg-white/95 shadow-[0_20px_50px_rgba(35,45,20,0.18)] backdrop-blur-md md:hidden">
-        <div className="grid h-18 grid-cols-6 items-center">
+        <div className="grid h-18 grid-cols-7 items-center">
           {navItems.map((item) => (
             <NavLink
               key={item.path}
