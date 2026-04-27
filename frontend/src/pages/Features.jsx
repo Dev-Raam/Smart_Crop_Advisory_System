@@ -1,7 +1,7 @@
 import { Rocket, Languages, LineChart, WifiOff, RefreshCw } from 'lucide-react';
 import heroImage from '../assets/farmf.jpg';
 
-const FutureScope = () => {
+const Features = () => {
   const items = [
     { icon: Rocket, text: 'Smarter crop and pest models with stronger retraining checks and richer field-level confidence reporting.' },
     { icon: Languages, text: 'More regional language support, including simpler farmer-first guidance and voice-led interactions.' },
@@ -47,4 +47,4 @@ const FutureScope = () => {
   );
 };
 
-export default FutureScope;
+export default Features;

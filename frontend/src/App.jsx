@@ -7,7 +7,7 @@ import FertilizerRecommendation from './pages/FertilizerRecommendation';
 import DiseaseDetection from './pages/DiseaseDetection';
 import Chatbot from './pages/Chatbot';
 import Profile from './pages/Profile';
-import FutureScope from './pages/FutureScope';
+import Features from './pages/Features';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -27,7 +27,7 @@ const AppContent = () => {
         <Route path="fertilizer-recommendation" element={<FertilizerRecommendation />} />
         <Route path="disease-detection" element={<DiseaseDetection />} />
         <Route path="chatbot" element={<Chatbot />} />
-        <Route path="future-scope" element={<FutureScope />} />
+        <Route path="future-scope" element={<Features />} />
         <Route path="profile" element={<Profile />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

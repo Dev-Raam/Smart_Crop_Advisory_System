@@ -96,7 +96,7 @@ const Dashboard = () => {
       path: '/chatbot',
     },
     {
-      title: 'Future Scope',
+      title: 'Features',
       description: 'Explore how the platform will grow with smarter and broader farmer support.',
       icon: Lightbulb,
       path: '/future-scope',
