@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Clock, Globe, LogOut, MapPin, MoonStar, Palette, RefreshCw, Settings, SunMedium, Trash2 } from 'lucide-react';
+import { Clock, Globe, LogOut, MapPin, MoonStar, Palette, RefreshCw, Settings, SunMedium, Trash2, X } from 'lucide-react';
 import { del, get, set } from 'idb-keyval';
 import { useAuth } from '../context/AuthContext';
 import { api, getAuthHeaders } from '../lib/api';
@@ -28,7 +28,28 @@ const Profile = () => {
   } = useAuth();
   const [history, setHistory] = useState([]);
   const [syncingLocation, setSyncingLocation] = useState(false);
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState(null);
   const t = (key) => translate(language, key);
+
+  const buildHistoryPreview = (item) => {
+    if (item.type === 'crop_recommendation') {
+      return `${t('recommendedPrefix')}: ${item.data.recommendation}`;
+    }
+
+    if (item.type === 'fertilizer_recommendation') {
+      return `Recommended fertilizer: ${item.data.fertilizer}`;
+    }
+
+    if (item.type === 'disease_detection') {
+      return `${t('foundPrefix')}: ${item.data.disease}`;
+    }
+
+    if (item.type === 'chat') {
+      return `${t('askedPrefix')}: ${(item.data.user_message || '').slice(0, 90)}`;
+    }
+
+    return 'Tap to view details';
+  };
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -74,6 +95,9 @@ const Profile = () => {
       const nextHistory = history.filter((item) => item._id !== id);
       setHistory(nextHistory);
       await set('user_history', nextHistory);
+      if (selectedHistoryItem?._id === id) {
+        setSelectedHistoryItem(null);
+      }
 
       if (type === 'chat') {
         await del(`chat_history_${user?.phone || 'guest'}_${language}`);
@@ -210,14 +234,18 @@ const Profile = () => {
           {history.length > 0 ? (
             <div className="grid gap-3">
               {history.map((item) => (
-                <div key={item._id} className="rounded-[24px] border border-[#ebefdf] bg-[#fafbf7] p-4">
+                <button
+                  key={item._id}
+                  type="button"
+                  onClick={() => setSelectedHistoryItem(item)}
+                  className="rounded-[24px] border border-[#ebefdf] bg-[#fafbf7] p-4 text-left transition hover:border-[#d7e4c1] hover:bg-white"
+                >
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="font-semibold capitalize text-[#243224]">{formatHistoryType(item.type)}</p>
-                      <p className="mt-1 text-sm text-[#60705d]">
-                        {item.type === 'crop_recommendation' && `${t('recommendedPrefix')}: ${item.data.recommendation}`}
-                        {item.type === 'disease_detection' && `${t('foundPrefix')}: ${item.data.disease}`}
-                        {item.type === 'chat' && `${t('askedPrefix')}: ${(item.data.user_message || '').slice(0, 90)}`}
+                      <p className="mt-1 text-sm text-[#60705d]">{buildHistoryPreview(item)}</p>
+                      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#7baa33]">
+                        Tap to open details
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -227,7 +255,10 @@ const Profile = () => {
                       {item.type === 'chat' ? (
                         <button
                           type="button"
-                          onClick={() => handleDeleteHistory(item._id, item.type)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleDeleteHistory(item._id, item.type);
+                          }}
                           className="rounded-full bg-red-50 p-2 text-red-500 transition hover:bg-red-100"
                           aria-label="Delete chat history"
                         >
@@ -236,7 +267,7 @@ const Profile = () => {
                       ) : null}
                     </div>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           ) : (
@@ -245,6 +276,105 @@ const Profile = () => {
             </div>
           )}
         </section>
+
+        {selectedHistoryItem ? (
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-[#14200f]/55 p-4 backdrop-blur-sm"
+            onClick={() => setSelectedHistoryItem(null)}
+          >
+            <div
+              className="w-full max-w-2xl rounded-[30px] bg-white p-6 shadow-[0_24px_70px_rgba(24,37,15,0.28)] md:p-7"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#7baa33]">Recent Activity</p>
+                  <h3 className="mt-2 text-2xl font-black capitalize text-[#243224]">
+                    {formatHistoryType(selectedHistoryItem.type)}
+                  </h3>
+                  <p className="mt-2 text-sm text-[#70806c]">
+                    {new Date(selectedHistoryItem.createdAt).toLocaleString()}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedHistoryItem(null)}
+                  className="rounded-full bg-[#f4f7ee] p-2 text-[#50614d] transition hover:bg-[#e7eddc]"
+                  aria-label="Close history details"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                {selectedHistoryItem.type === 'chat' ? (
+                  <>
+                    <div className="rounded-[24px] border border-[#e6ebda] bg-[#f9fbf5] p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7b8a72]">Farmer Message</p>
+                      <p className="mt-3 whitespace-pre-wrap leading-relaxed text-[#243224]">
+                        {selectedHistoryItem.data.user_message || 'No saved message found.'}
+                      </p>
+                    </div>
+                    <div className="rounded-[24px] border border-[#e6ebda] bg-white p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7b8a72]">Assistant Reply</p>
+                      <p className="mt-3 whitespace-pre-wrap leading-relaxed text-[#243224]">
+                        {selectedHistoryItem.data.ai_response || 'No saved reply found.'}
+                      </p>
+                    </div>
+                  </>
+                ) : null}
+
+                {selectedHistoryItem.type === 'crop_recommendation' ? (
+                  <>
+                    <div className="rounded-[24px] border border-[#e6ebda] bg-[#f9fbf5] p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7b8a72]">Recommended Crop</p>
+                      <p className="mt-3 text-lg font-semibold text-[#243224]">{selectedHistoryItem.data.recommendation}</p>
+                    </div>
+                    {selectedHistoryItem.data.fertilizer ? (
+                      <div className="rounded-[24px] border border-[#e6ebda] bg-white p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7b8a72]">Fertilizer Guidance</p>
+                        <p className="mt-3 leading-relaxed text-[#243224]">
+                          {selectedHistoryItem.data.fertilizer.name} for {selectedHistoryItem.data.fertilizer.crop} in {selectedHistoryItem.data.fertilizer.soil}.
+                        </p>
+                      </div>
+                    ) : null}
+                  </>
+                ) : null}
+
+                {selectedHistoryItem.type === 'fertilizer_recommendation' ? (
+                  <div className="rounded-[24px] border border-[#e6ebda] bg-[#f9fbf5] p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7b8a72]">Recommended Fertilizer</p>
+                    <p className="mt-3 text-lg font-semibold text-[#243224]">{selectedHistoryItem.data.fertilizer}</p>
+                    {selectedHistoryItem.data.explanation ? (
+                      <p className="mt-3 leading-relaxed text-[#556451]">{selectedHistoryItem.data.explanation}</p>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {selectedHistoryItem.type === 'disease_detection' ? (
+                  <>
+                    <div className="rounded-[24px] border border-[#e6ebda] bg-[#f9fbf5] p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7b8a72]">Detected Result</p>
+                      <p className="mt-3 text-lg font-semibold text-[#243224]">{selectedHistoryItem.data.disease}</p>
+                    </div>
+                    {selectedHistoryItem.data.summary ? (
+                      <div className="rounded-[24px] border border-[#e6ebda] bg-white p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7b8a72]">Summary</p>
+                        <p className="mt-3 leading-relaxed text-[#243224]">{selectedHistoryItem.data.summary}</p>
+                      </div>
+                    ) : null}
+                    {selectedHistoryItem.data.treatment ? (
+                      <div className="rounded-[24px] border border-[#e6ebda] bg-white p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7b8a72]">Treatment</p>
+                        <p className="mt-3 leading-relaxed text-[#243224]">{selectedHistoryItem.data.treatment}</p>
+                      </div>
+                    ) : null}
+                  </>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
