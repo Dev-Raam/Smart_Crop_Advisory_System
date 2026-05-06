@@ -56,8 +56,6 @@ python --version
 
 ### Backend `.env`
 
-Create or update [backend/.env](/D:/smart_crop_advisory_system/backend/.env).
-
 Example:
 
 ```env
@@ -69,12 +67,6 @@ CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 ML_SERVICE_URL=http://127.0.0.1:8000
 HUGGINGFACE_API_KEY=your_key_if_used
 ```
-
-Notes:
-
-- `JWT_EXPIRATION=90d` keeps tokens valid for 90 days.
-- The backend currently reads `.env` automatically.
-- A standard `mongodb://...` URI is preferred here because it avoids SRV DNS lookup problems some machines face with `mongodb+srv://...`.
 
 ### Frontend environment
 
@@ -136,7 +128,7 @@ Run the three services in three separate terminals.
 ### Terminal 1: Backend
 
 ```powershell
-cd D:\smart_crop_advisory_system\backend
+cd backend
 npm run dev
 ```
 
@@ -149,7 +141,7 @@ http://localhost:5000
 ### Terminal 2: ML Service
 
 ```powershell
-cd D:\smart_crop_advisory_system\ml-service
+cd ml-service
 venv\Scripts\activate
 uvicorn main:app --reload
 ```
@@ -163,7 +155,7 @@ http://127.0.0.1:8000
 ### Terminal 3: Frontend
 
 ```powershell
-cd D:\smart_crop_advisory_system\frontend
+cd frontend
 npm run dev
 ```
 
@@ -181,18 +173,6 @@ Use these URLs to verify the services:
 - ML service health: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
 - Frontend app: [http://localhost:5173](http://localhost:5173)
 
-## Important Runtime Notes
-
-- Do not run the old Node backend and the Spring Boot backend at the same time.
-- `backend/npm run dev` now starts Spring Boot.
-- If you ever need the older Express server for reference, use:
-
-```powershell
-cd backend
-npm run dev:legacy
-```
-
-- `dev:legacy` and Spring Boot should not run together on port `5000`.
 
 ## Main Features
 
@@ -249,72 +229,13 @@ npm run build
 
 The ML service does not have a formal build step. Run it with Uvicorn.
 
-## Troubleshooting
-
-### 1. Port 5000 is already in use
-
-Find and stop the process:
-
-```powershell
-netstat -ano | findstr :5000
-taskkill /PID <PID> /F
-```
-
-### 2. MongoDB Atlas connection fails
-
-Check:
-
-- your internet connection
-- MongoDB Atlas IP access list
-- username and password in `MONGO_URI`
-- whether the URI uses the correct replica set and hosts
-
-If `mongodb+srv://...` gives DNS lookup issues, use the standard `mongodb://host1,host2,host3/...` form.
-
-### 3. Frontend loads but crop, fertilizer, chat, or pest detection does nothing
-
-Check that all three services are running:
-
-- frontend on `5173`
-- backend on `5000`
-- ML service on `8000`
-
-Also verify:
-
-- `ML_SERVICE_URL=http://127.0.0.1:8000` in `backend/.env`
-- backend health endpoint works
-- ML service health endpoint works
-
-### 4. PowerShell blocks npm scripts
-
-If PowerShell script execution is restricted, run:
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-```
-
-Or use:
-
-```powershell
-npm.cmd run dev
-```
-
-### 5. Maven repository permission issue
-
-This project is configured to use a local Maven cache under:
-
-```text
-backend/.m2/repository
-```
-
-So use the provided `npm run dev` flow from the `backend` folder.
 
 ## Suggested Startup Order
 
 For the smoothest experience:
 
-1. Start the ML service
-2. Start the backend
+1. Start the backend
+2. Start the ML service
 3. Start the frontend
 4. Open the frontend in the browser
 5. Sign in and test crop, fertilizer, chatbot, and pest detection
@@ -326,6 +247,4 @@ For the smoothest experience:
 - add backend integration tests for service proxy routes
 - add Docker support
 
-## License
 
-Add your preferred license here before publishing publicly.
